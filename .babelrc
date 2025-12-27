@@ -1,0 +1,10 @@
+// {
+//   "presets": ["@babel/preset-env", "@babel/preset-react"]
+// }
+// we added the automatic runtime by using this we don't need to import react in every file like "import React from 'react'"
+{
+  "presets": [
+    "@babel/preset-env",
+    ["@babel/preset-react", { "runtime": "automatic" }]
+  ]
+}
