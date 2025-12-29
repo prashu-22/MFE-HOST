@@ -9,9 +9,12 @@ module.exports = {
   devServer: {
     port: 3000,
     historyApiFallback: true,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+    },
   },
   output: {
-    publicPath: '/',
+    publicPath: 'auto',
     clean: true,
   },
   module: {

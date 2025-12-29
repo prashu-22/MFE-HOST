@@ -213,11 +213,11 @@ function AppContent() {
             path="/"
             element={
               <div style={styles.card}>
-                <h2>Welcome 👋</h2>
+                <h2>Welcome 👋 Deployed one</h2>
                 <p>
                   This is the <strong>Host Application</strong>.  
                   It dynamically loads Micro Frontends using
-                  <strong> Webpack Module Federation</strong>.
+                  <strong> Webpack Module Federation </strong>.
                 </p>
               </div>
             }
@@ -252,17 +252,9 @@ function AppContent() {
               }
             />
           )}
-            {/* Next App Router remote via iframe */}
-  <Route
-    path="/next/*"
-    element={
-      <div style={styles.remoteCard}>
-        <NextAppIframe route="/" />
-      </div>
-    }
-  />
 
         </Routes>
+        
       </main>
     </div>
   );

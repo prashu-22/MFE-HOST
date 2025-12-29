@@ -4,14 +4,16 @@ const ModuleFederationPlugin = require('webpack/lib/container/ModuleFederationPl
 const path = require('path');
 
 module.exports = {
-  mode: 'development',
+  mode: 'production',
   entry: './src/index.js',
   devServer: {
     port: 3000,
     historyApiFallback: true,
   },
   output: {
-    publicPath: '/',
+    path: path.resolve(__dirname, "dist"),
+    filename: "[name].js",
+    publicPath: "/",
     clean: true,
   },
   module: {
@@ -30,7 +32,7 @@ plugins: [
   new ModuleFederationPlugin({
     name: 'hostApp', // Unique name of the host
     remotes: {
-      reactRemote1: 'reactRemote1@http://localhost:3001/remoteEntry.js',
+      reactRemote1: 'reactRemote1@https://remote-1-prashu.vercel.app/',
       reactRemote2: 'reactRemote2@http://localhost:3002/remoteEntry.js',
       // nextRemote: 'nextRemote@http://localhost:3003/_next/static/chunks/remoteEntry.js',
     },
