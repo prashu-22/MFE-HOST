@@ -32,8 +32,8 @@ plugins: [
   new ModuleFederationPlugin({
     name: 'hostApp', // Unique name of the host
     remotes: {
-      reactRemote1: 'reactRemote1@https://remote-1-prashu.vercel.app/',
-      reactRemote2: 'reactRemote2@http://localhost:3002/remoteEntry.js',
+      reactRemote1: 'reactRemote1@https://remote-1-prashu.vercel.app/remoteEntry.js',
+      reactRemote2: 'reactRemote2@https://remote-2-prashu.vercel.app/remoteEntry.js',
       // nextRemote: 'nextRemote@http://localhost:3003/_next/static/chunks/remoteEntry.js',
     },
     shared: {
