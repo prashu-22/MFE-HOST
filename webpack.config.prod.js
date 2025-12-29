@@ -37,8 +37,8 @@ plugins: [
       // nextRemote: 'nextRemote@http://localhost:3003/_next/static/chunks/remoteEntry.js',
     },
     shared: {
-      react: { singleton: true, eager: true },
-      'react-dom': { singleton: true, eager: true },
+      react: { singleton: true },
+      'react-dom': { singleton: true},
     },
   }),
   new HtmlWebpackPlugin({
