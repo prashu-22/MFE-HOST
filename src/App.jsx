@@ -142,8 +142,8 @@ const ReactRemoteApp1 = lazy(() => import("reactRemote1/App"));
 const ReactRemoteApp2 = lazy(() => import("reactRemote2/App"));
 
 const REMOTES = {
-  react1: "http://localhost:3001/remoteEntry.js",
-  react2: "http://localhost:3002/remoteEntry.js",
+  react1: "https://remote-1-prashu.vercel.app/remoteEntry.js",
+  react2: "https://remote-2-prashu.vercel.app/remoteEntry.js",
 };
 
 function AppContent() {
