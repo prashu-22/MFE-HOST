@@ -14,7 +14,7 @@ module.exports = {
     },
   },
   output: {
-    publicPath: 'auto',
+    publicPath: '/',
     clean: true,
   },
   module: {

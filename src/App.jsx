@@ -1,168 +1,105 @@
-// import { Suspense, lazy, useEffect, useState } from "react";
-// import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
-// import { checkRemote } from "./CheckRemote";
-// import { RemoteErrorBoundary } from "./RemoteErrorBoundary";
-
-// const ReactRemoteApp1 = lazy(() => import("reactRemote1/App"));
-// const ReactRemoteApp2 = lazy(() => import("reactRemote2/App"));
-
-// const REMOTES = {
-//   react1: "http://localhost:3001/remoteEntry.js",
-//   react2: "http://localhost:3002/remoteEntry.js"
-// };
-
-// function AppContent() {
-//   const [remoteStatus, setRemoteStatus] = useState({});
-//   const [remoteError, setRemoteError] = useState(null); // store only one error
-//   const location = useLocation();
-
-//   // Check remote availability
-//   useEffect(() => {
-//     Object.entries(REMOTES).forEach(([name, url]) => {
-//       checkRemote(url)
-//         .then((ok) => setRemoteStatus((s) => ({ ...s, [name]: ok })))
-//         .catch(() => setRemoteStatus((s) => ({ ...s, [name]: false })));
-//     });
-//   }, []);
-
-//   // Clear error when route changes
-//   useEffect(() => {
-//     setRemoteError(null);
-//   }, [location.pathname]);
-
-// const handleRemoteClick = (name) => (e) => {
-//   // Check if remote is loaded or failed
-//   const status = remoteStatus[name];
-
-//   if (status === false) { // definitely unavailable
-//     e.preventDefault(); // block navigation
-//     setRemoteError(
-//       `❌ Remote "${name}" is currently unavailable. 
-// Please check if the server is running and CORS is configured correctly.`
-//     );
-//   }
-//   // If status is true or still undefined (loading), let navigation happen
-// };
-
-//   return (
-//     <>
-//       <h1>Host Shell</h1>
-
-//       <nav style={{ display: "flex", gap: 10 }}>
-//         <Link to="/">Home</Link>
-
-//         <Link
-//           to="/react1"
-//           onClick={handleRemoteClick("react1")}
-//           style={{
-            
-//             cursor: "pointer"
-//           }}
-//         >
-//           React Remote 1
-//         </Link>
-
-//         <Link
-//           to="/react2"
-//           onClick={handleRemoteClick("react2")}
-//           style={{
-           
-//             cursor: "pointer"
-//           }}
-//         >
-//           React Remote 2
-//         </Link>
-//       </nav>
-
-//       {/* Show only one error at a time */}
-//       {remoteError && (
-//         <div style={{ color: "red", marginTop: 10, whiteSpace: "pre-line" }}>
-//           {remoteError}
-//         </div>
-//       )}
-
-//       <Routes>
-//         <Route path="/" element={<h2>🏠 Host Home</h2>} />
-
-       
-//   {remoteStatus.react1 && (
-//     <Route
-//       path="/react1/*"
-//       element={
-//         <RemoteErrorBoundary name="React Remote 1">
-//           <Suspense fallback={<h2>Loading React Remote 1...</h2>}>
-//             <ReactRemoteApp1 />
-//           </Suspense>
-//         </RemoteErrorBoundary>
-//       }
-//     />
-//   )}
-
-//   {remoteStatus.react2 && (
-//     <Route
-//       path="/react2/*"
-//       element={
-//         <RemoteErrorBoundary name="React Remote 2">
-//           <Suspense fallback={<h2>Loading React Remote 2...</h2>}>
-//             <ReactRemoteApp2 />
-//           </Suspense>
-//         </RemoteErrorBoundary>
-//       }
-//     />
-//   )}
-// </Routes>
-
-     
-//     </>
-//   );
-// }
-
-// export default function App() {
-//   return (
-//     <BrowserRouter>
-//       <AppContent />
-//     </BrowserRouter>
-//   );
-// }
 import { Suspense, lazy, useEffect, useState } from "react";
 import {
   BrowserRouter,
   Routes,
   Route,
-  Link,
-  useLocation,
   NavLink,
+  useLocation,
 } from "react-router-dom";
+
 import { checkRemote } from "./CheckRemote";
 import { RemoteErrorBoundary } from "./RemoteErrorBoundary";
-import NextAppIframe from "./components/NextAppIframe";
 
+/* ---------------- REMOTE IMPORTS ---------------- */
 
+// Webpack Module Federation dynamic imports
 const ReactRemoteApp1 = lazy(() => import("reactRemote1/App"));
 const ReactRemoteApp2 = lazy(() => import("reactRemote2/App"));
+
+/* ---------------- REMOTE ENTRY URLS ---------------- */
 
 const REMOTES = {
   react1: "https://remote-1-prashu.vercel.app/remoteEntry.js",
   react2: "https://remote-2-prashu.vercel.app/remoteEntry.js",
 };
 
+/* ================================================== */
+/* ================= APP CONTENT ==================== */
+/* ================================================== */
+
 function AppContent() {
-  const [remoteStatus, setRemoteStatus] = useState({});
-  const [remoteError, setRemoteError] = useState(null);
   const location = useLocation();
 
+  /* ---------- REMOTE AVAILABILITY ---------- */
+  const [remoteStatus, setRemoteStatus] = useState({});
+  const [remoteError, setRemoteError] = useState(null);
+
+  /* ---------- LAST ROUTE STATE (IMPORTANT) ---------- */
+  const [lastRoutes, setLastRoutes] = useState(() => {
+    const saved = sessionStorage.getItem("mfe:lastRoutes");
+
+    return saved
+      ? JSON.parse(saved)
+      : {
+          react1: "/react1",
+          react2: "/react2",
+        };
+  });
+
+  /* ---------- TRACK ROUTE CHANGES ---------- */
+  useEffect(() => {
+    const path = location.pathname;
+console.log("Pathname:", path);
+    setLastRoutes((prev) => {
+      let updated = prev;
+
+      if (path.startsWith("/react1")) {
+        updated = { ...prev, react1: path };
+      }
+
+      if (path.startsWith("/react2")) {
+        updated = { ...prev, react2: path };
+      }
+
+      sessionStorage.setItem("mfe:lastRoutes", JSON.stringify(updated));
+      return updated;
+    });
+  }, [location.pathname]);
+  useEffect(() => {
+  const handler = (e) => {
+    const { app, path } = e.detail;
+
+    setLastRoutes((prev) => {
+      const updated = { ...prev, [app]: path };
+      sessionStorage.setItem("mfe:lastRoutes", JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  window.addEventListener("mfe:route-change", handler);
+  return () => window.removeEventListener("mfe:route-change", handler);
+}, []);
+
+
+  /* ---------- CHECK IF REMOTES ARE ONLINE ---------- */
   useEffect(() => {
     Object.entries(REMOTES).forEach(([name, url]) => {
       checkRemote(url)
-        .then((ok) => setRemoteStatus((s) => ({ ...s, [name]: ok })))
-        .catch(() => setRemoteStatus((s) => ({ ...s, [name]: false })));
+        .then((ok) =>
+          setRemoteStatus((s) => ({ ...s, [name]: ok }))
+        )
+        .catch(() =>
+          setRemoteStatus((s) => ({ ...s, [name]: false }))
+        );
     });
   }, []);
 
+  /* ---------- CLEAR ERROR ON NAVIGATION ---------- */
   useEffect(() => {
     setRemoteError(null);
   }, [location.pathname]);
 
+  /* ---------- BLOCK NAVIGATION IF REMOTE DOWN ---------- */
   const handleRemoteClick = (name) => (e) => {
     if (remoteStatus[name] === false) {
       e.preventDefault();
@@ -172,11 +109,15 @@ function AppContent() {
     }
   };
 
+  /* ================================================== */
+  /* ===================== UI ========================= */
+  /* ================================================== */
+
   return (
     <div style={styles.app}>
-      {/* HEADER */}
+      {/* ---------------- HEADER ---------------- */}
       <header style={styles.header}>
-        <h2 style={{ margin: 0 }}>🧩 MFE Host Shell</h2>
+        <h2>🧩 MFE Host Shell</h2>
 
         <nav style={styles.nav}>
           <NavLink to="/" style={navStyle}>
@@ -184,7 +125,7 @@ function AppContent() {
           </NavLink>
 
           <NavLink
-            to="/react1"
+            to={lastRoutes.react1}
             onClick={handleRemoteClick("react1")}
             style={navStyle}
           >
@@ -192,7 +133,7 @@ function AppContent() {
           </NavLink>
 
           <NavLink
-            to="/react2"
+            to={lastRoutes.react2}
             onClick={handleRemoteClick("react2")}
             style={navStyle}
           >
@@ -201,28 +142,26 @@ function AppContent() {
         </nav>
       </header>
 
-      {/* ERROR */}
-      {remoteError && (
-        <div style={styles.error}>{remoteError}</div>
-      )}
+      {/* ---------------- ERROR ---------------- */}
+      {remoteError && <div style={styles.error}>{remoteError}</div>}
 
-      {/* CONTENT */}
+      {/* ---------------- CONTENT ---------------- */}
       <main style={styles.content}>
         <Routes>
           <Route
             path="/"
             element={
               <div style={styles.card}>
-                <h2>Welcome 👋 Deployed one</h2>
+                <h2>Welcome 👋</h2>
                 <p>
-                  This is the <strong>Host Application</strong>.  
-                  It dynamically loads Micro Frontends using
-                  <strong> Webpack Module Federation </strong>.
+                  This is the <strong>Host Application</strong> using
+                  <strong> Webpack Module Federation</strong>.
                 </p>
               </div>
             }
           />
 
+          {/* ---------- REACT REMOTE 1 ---------- */}
           {remoteStatus.react1 && (
             <Route
               path="/react1/*"
@@ -230,7 +169,10 @@ function AppContent() {
                 <RemoteErrorBoundary name="React Remote 1">
                   <Suspense fallback={<h3>Loading Remote 1...</h3>}>
                     <div style={styles.remoteCard}>
-                      <ReactRemoteApp1 standalone={false} />
+                      <ReactRemoteApp1
+                        standalone={false}
+                        basename="/react1"
+                      />
                     </div>
                   </Suspense>
                 </RemoteErrorBoundary>
@@ -238,6 +180,7 @@ function AppContent() {
             />
           )}
 
+          {/* ---------- REACT REMOTE 2 ---------- */}
           {remoteStatus.react2 && (
             <Route
               path="/react2/*"
@@ -245,20 +188,25 @@ function AppContent() {
                 <RemoteErrorBoundary name="React Remote 2">
                   <Suspense fallback={<h3>Loading Remote 2...</h3>}>
                     <div style={styles.remoteCard}>
-                      <ReactRemoteApp2 standalone={false}/>
+                      <ReactRemoteApp2
+                        standalone={false}
+                        basename="/react2"
+                      />
                     </div>
                   </Suspense>
                 </RemoteErrorBoundary>
               }
             />
           )}
-
         </Routes>
-        
       </main>
     </div>
   );
 }
+
+/* ================================================== */
+/* ================= ROOT APP ======================= */
+/* ================================================== */
 
 export default function App() {
   return (
@@ -268,7 +216,6 @@ export default function App() {
   );
 }
 
-/* ---------------- STYLES ---------------- */
 
 const styles = {
   app: {
@@ -280,7 +227,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: "16px 32px",
+    padding: "16px 16px",
     background: "#1f2937",
     color: "#fff",
   },
